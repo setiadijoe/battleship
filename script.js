@@ -199,6 +199,9 @@ let placementIndex = 0;
 let placementHorizontal = true;
 
 /* ================== DOM ================== */
+const readyBtn         = document.getElementById('ready-btn');      // ⬅ BARU
+const placementHintEl  = document.getElementById('placement-hint'); // ⬅ BARU
+
 const subtitleEl       = document.getElementById('subtitle');
 const screens          = document.querySelectorAll('.screen');
 const difficultyBtns   = document.querySelectorAll('[data-difficulty]');
@@ -377,6 +380,12 @@ function startManualPlacement() {
   placementIndex = 0;
   placementHorizontal = true;
 
+  // Reset tombol Ready
+  readyBtn.classList.remove('show');
+  rotateBtn.style.display = '';
+  placementHintEl.innerHTML =
+    'Klik papan untuk menempatkan kapal. <b>Klik kanan</b> atau tombol rotasi untuk mengubah orientasi.';
+
   // Musuh sudah disiapkan tapi disembunyikan
   enemyBoard.randomPlaceAll();
 
@@ -478,22 +487,51 @@ function toggleOrientation() {
   clearPreview();
 }
 
+/* ================== TAHAP 1: Semua kapal sudah ditempatkan ================== */
 function finishManualPlacement() {
   placing = false;
-  placementPanelEl.classList.remove('active');
-  playerBoardEl.classList.remove('placing');
-  enemyBoardEl.classList.remove('locked');
+  placementIndex = SHIPS.length;
+
+  // Hapus listener hover & preview
   clearPreview();
 
+  // Nonaktifkan interaksi klik pada papan pemain
+  playerBoardEl.classList.remove('placing');
+
+  // Ubah panel: tunjukkan pesan siap + tombol Ready
+  currentShipNameEl.textContent = '✅ Semua kapal sudah ditempatkan!';
+  rotateBtn.style.display = 'none';
+  placementHintEl.innerHTML =
+    'Cek kembali posisimu. Jika sudah yakin, klik <b>Ready</b> untuk memulai pertempuran.';
+  shipsListEl.innerHTML = SHIPS.map(
+    s => `<div class="ship-item placed">✅ ${s.name} (${s.size})</div>`
+  ).join('');
+
+  // Tampilkan tombol Ready
+  readyBtn.classList.add('show');
+
+  log('✅ Semua kapal siap. Klik tombol Ready untuk memulai.', 'sunk');
+}
+
+/* ================== TAHAP 2: User klik Ready → mulai bertempur ================== */
+function startBattle() {
+  // Sembunyikan panel penempatan
+  placementPanelEl.classList.remove('active');
+  readyBtn.classList.remove('show');
+
+  // Tampilkan kedua papan sejajar
   document.body.classList.remove('phase-manual');
   enemyWrapperEl.style.display = '';
+
+  // Kembalikan judul papan pemain
   playerTitleEl.textContent = '🚢 Papanmu';
 
+  // Aktifkan giliran
   playerTurn = true;
-  renderSunkShips();
+  enemyBoardEl.classList.remove('locked');
 
-  log('🎯 Semua kapal ditempatkan! Pertempuran dimulai.', 'sunk');
-  log('Klik papan musuh untuk menembak.', 'info');
+  renderSunkShips();
+  log('⚔️ Pertempuran dimulai! Klik papan musuh untuk menembak.', 'sunk');
 }
 
 /* ================== SERANGAN PEMBUAT ================== */
@@ -579,6 +617,7 @@ function endGame(playerWon) {
 }
 
 /* ================== EVENT ================== */
+readyBtn.addEventListener('click', startBattle);          // ⬅ BARU
 rotateBtn.addEventListener('click', toggleOrientation);
 newGameBtn.addEventListener('click', () => {
   document.body.classList.remove('phase-manual');

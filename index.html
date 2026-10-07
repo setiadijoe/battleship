@@ -56,17 +56,21 @@
     <section id="screen-game" class="screen">
 
       <!-- Panel penempatan manual (hanya tampil saat phase-manual) -->
-      <div id="placement-panel">
-        <h3>🚢 Atur Posisi Kapalmu</h3>
-        <p class="hint">
-          Klik papan untuk menempatkan kapal. <b>Klik kanan</b> atau tombol rotasi untuk mengubah orientasi.
-        </p>
-        <div class="placement-toolbar">
-          <span>Kapal saat ini: <b id="current-ship-name">—</b></span>
-          <button id="rotate-btn">🔄 Horizontal ↔</button>
-        </div>
-        <div id="ships-list"></div>
+    <div id="placement-panel">
+      <h3>🚢 Atur Posisi Kapalmu</h3>
+      <p class="hint" id="placement-hint">
+        Klik papan untuk menempatkan kapal. <b>Klik kanan</b> atau tombol rotasi untuk mengubah orientasi.
+      </p>
+      <div class="placement-toolbar">
+        <span>Kapal saat ini: <b id="current-ship-name">—</b></span>
+        <button id="rotate-btn">🔄 Horizontal ↔</button>
       </div>
+
+      <div id="ships-list"></div>
+
+      <!-- Tombol Ready — awalnya disembunyikan, muncul setelah semua kapal ditempatkan -->
+      <button id="ready-btn" class="ready-btn">⚔️ Ready — Mulai Pertempuran</button>
+    </div>
 
       <!-- Panel status kapal hancur (hanya tampil saat bertempur) -->
       <div class="status-panel">
