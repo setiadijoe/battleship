@@ -397,3 +397,67 @@ body.phase-manual #player-wrapper {
   0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
   50%      { box-shadow: 0 0 0 12px rgba(34, 197, 94, 0); }
 }
+
+/* ============================================================
+   PAKSA PAPAN BERDAMPINGAN (override semua aturan sebelumnya)
+   ============================================================ */
+   #boards {
+    display: flex !important;
+    flex-direction: row !important;      /* kiri → kanan */
+    flex-wrap: nowrap !important;        /* JANGAN turun ke baris baru */
+    justify-content: center !important;
+    align-items: flex-start !important;
+    gap: 18px !important;
+    width: 100%;
+  }
+  
+  .board-wrapper {
+    flex: 0 0 auto !important;           /* jangan melebar / menyusut */
+    width: auto !important;
+    max-width: none !important;
+  }
+  
+  /* Papan pemain di kiri, papan musuh di kanan */
+  #player-wrapper { order: 1 !important; }
+  #enemy-wrapper  { order: 2 !important; }
+  
+  /* Kecilkan grid agar kedua papan pasti muat berdampingan */
+  .board {
+    grid-template-columns: 22px repeat(20, 18px) !important;
+    grid-template-rows: 18px repeat(20, 18px) !important;
+  }
+  
+  .cell {
+    font-size: 10px !important;
+  }
+  
+  .label {
+    font-size: 8px !important;
+  }
+  
+  /* Saat fase manual: tetap hanya papan pemain di tengah */
+  body.phase-manual #enemy-wrapper { display: none !important; }
+  body.phase-manual #boards        { justify-content: center !important; }
+  body.phase-manual #player-wrapper{ transform: scale(1.05); }  
+
+  /* Layar sedang */
+@media (max-width: 1100px) {
+  .board {
+    grid-template-columns: 20px repeat(20, 16px) !important;
+    grid-template-rows: 16px repeat(20, 16px) !important;
+  }
+  .cell  { font-size: 9px !important; }
+  .label { font-size: 7px !important; }
+  #boards { gap: 12px !important; }
+}
+
+/* Layar kecil */
+@media (max-width: 850px) {
+  .board {
+    grid-template-columns: 18px repeat(20, 14px) !important;
+    grid-template-rows: 14px repeat(20, 14px) !important;
+  }
+  .cell  { font-size: 8px !important; }
+  .label { font-size: 6px !important; }
+  #boards { gap: 8px !important; }
+}
