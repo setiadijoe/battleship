@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Battle Ship</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1>⚓ Battle Ship ⚓</h1>
+    <p class="subtitle" id="subtitle">Papan 20 × 20</p>
+  </header>
+
+  <div id="app">
+
+    <!-- ============ SCREEN 1: PILIH KESULITAN ============ -->
+    <section id="screen-difficulty" class="screen active">
+      <h2>Pilih Tingkat Kesulitan</h2>
+      <p class="hint">Pilih level lawan yang ingin kamu hadapi.</p>
+      <div class="options">
+        <button class="option-btn" data-difficulty="easy">
+          <span class="option-title">🟢 Easy</span>
+          <span class="option-desc">Bot menembak acak</span>
+        </button>
+        <button class="option-btn" data-difficulty="normal">
+          <span class="option-title">🟡 Normal</span>
+          <span class="option-desc">Bot membidik setelah kena</span>
+        </button>
+        <button class="option-btn" data-difficulty="hard">
+          <span class="option-title">🔴 Hard</span>
+          <span class="option-desc">Pola catur + lacak arah kapal</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN 2: PILIH MODE PENEMPATAN ============ -->
+    <section id="screen-placement" class="screen">
+      <h2>Penempatan Kapal</h2>
+      <p class="hint">Bagaimana kamu ingin menempatkan kapalmu?</p>
+      <div class="options">
+        <button class="option-btn" data-mode="auto">
+          <span class="option-title">🎲 Otomatis</span>
+          <span class="option-desc">Kapal ditempatkan acak — langsung main</span>
+        </button>
+        <button class="option-btn" data-mode="manual">
+          <span class="option-title">🎯 Manual</span>
+          <span class="option-desc">Atur posisi kapal satu per satu</span>
+        </button>
+      </div>
+      <button id="back-to-difficulty" class="back-btn">← Kembali ke pilihan kesulitan</button>
+    </section>
+
+    <!-- ============ SCREEN 3: PERMAINAN / PENEMPATAN MANUAL ============ -->
+    <section id="screen-game" class="screen">
+
+      <!-- Panel penempatan manual (hanya tampil saat phase-manual) -->
+      <div id="placement-panel">
+        <h3>🚢 Atur Posisi Kapalmu</h3>
+        <p class="hint">
+          Klik papan untuk menempatkan kapal. <b>Klik kanan</b> atau tombol rotasi untuk mengubah orientasi.
+        </p>
+        <div class="placement-toolbar">
+          <span>Kapal saat ini: <b id="current-ship-name">—</b></span>
+          <button id="rotate-btn">🔄 Horizontal ↔</button>
+        </div>
+        <div id="ships-list"></div>
+      </div>
+
+      <!-- Panel status kapal hancur (hanya tampil saat bertempur) -->
+      <div class="status-panel">
+        <div>
+          <strong>Kapal Musuh Hancur</strong>
+          <div class="sunk-ships" id="enemy-sunk">—</div>
+        </div>
+        <div>
+          <strong>Kapalmu Hancur</strong>
+          <div class="sunk-ships" id="player-sunk">—</div>
+        </div>
+      </div>
+
+      <!-- Papan -->
+      <div id="boards">
+        <div class="board-wrapper" id="player-wrapper">
+          <h2 id="player-title">🚢 Papanmu</h2>
+          <div class="board" id="player-board"></div>
+        </div>
+        <div class="board-wrapper" id="enemy-wrapper">
+          <h2>🎯 Papan Musuh</h2>
+          <div class="board" id="enemy-board"></div>
+        </div>
+      </div>
+
+      <div id="winner"></div>
+      <div id="log"></div>
+
+      <div class="game-controls">
+        <button id="new-game" class="back-btn">🔄 Main Baru</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
