@@ -321,38 +321,55 @@ function renderBoard(boardEl, board, showShips) {
     }
   }
 
-  // --- 2. Gambar kapal (hanya kalau showShips = true) ---
+function renderBoard(boardEl, board, showShips) {
+  // Precompute segmen kapal (hanya kalau perlu tampil)
+  const segMap = new Map();
   if (showShips) {
     board.ships.forEach(ship => {
       const total = ship.coords.length;
       ship.coords.forEach(([r, c], idx) => {
-        const cell = boardEl.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
-        if (!cell) return;
-
         let part = 'body';
         if (total > 1) {
-          if (idx === 0) part = 'tail';                 // segmen pertama = buritan
-          if (idx === total - 1) part = 'head';         // segmen terakhir = haluan
+          if (idx === 0)           part = 'tail';
+          if (idx === total - 1)   part = 'head';
         }
-        // (kalau total === 1, biarkan 'body')
-
-        cell.classList.add('ship');
-        cell.innerHTML = shipSegmentSVG(ship.name, part, ship.horizontal);
+        segMap.set(`${r},${c}`, {
+          shipName: ship.name,
+          part,
+          horizontal: ship.horizontal,
+        });
       });
     });
   }
 
-  // --- 3. Timpa dengan state HIT / MISS ---
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
+      const cell = boardEl.querySelector(
+        `.cell[data-row="${r}"][data-col="${c}"]`
+      );
+      if (!cell) continue;
+
       const v = board.cells[r][c];
-      const cell = boardEl.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+      let newClass = 'cell';
+      let newInner = '';
+
       if (v === HIT) {
-        cell.className = 'cell hit';
-        cell.innerHTML = '';           // hilangkan gambar kapal → tampak "bolong"
+        newClass = 'cell hit';
       } else if (v === MISS) {
-        cell.className = 'cell miss';
-        cell.innerHTML = '';
+        newClass = 'cell miss';
+      } else if (v === SHIP && showShips) {
+        newClass = 'cell ship';
+        const seg = segMap.get(`${r},${c}`);
+        if (seg) {
+          newInner = shipSegmentSVG(seg.shipName, seg.part, seg.horizontal);
+        }
+      }
+
+      // ⬇ KUNCI: hanya update kalau kelasnya berubah
+      // Ini mencegah animasi smoke restart setiap render
+      if (cell.className !== newClass) {
+        cell.className = newClass;
+        cell.innerHTML = newInner;
       }
     }
   }
