@@ -165,12 +165,14 @@ class Board {
 }
 
 /* ================== BOT ================== */
+/* ================== BOT ================== */
 class Bot {
   constructor(difficulty) {
     this.difficulty = difficulty;
     this.tried = new Set();
-    this.targets = [];
-    this.activeHits = [];
+    this.targets = [];        // antrian target prioritas
+    this.activeHits = [];     // koordinat hit pada kapal yang sedang dikejar
+    this.lockedAxis = null;   // 'h' | 'v' — dipakai expert saat sudah tahu arah
   }
 
   key(r, c) { return r + ',' + c; }
@@ -183,12 +185,16 @@ class Bot {
     return avail.length ? avail[Math.floor(Math.random() * avail.length)] : null;
   }
 
+  /* ========== PILIH TARGET BERIKUTNYA ========== */
   pickTarget() {
+    // Easy: selalu acak
     if (this.difficulty === 'easy') return this.randomUntried();
 
+    // Semua level (kecuali easy): utamakan antrian target
     if (this.targets.length) return this.targets.shift();
 
-    if (this.difficulty === 'hard') {
+    // Hard & Expert: pola catur untuk fase mencari
+    if (this.difficulty === 'hard' || this.difficulty === 'expert') {
       const parity = [];
       for (let r = 0; r < SIZE; r++)
         for (let c = 0; c < SIZE; c++)
@@ -201,18 +207,28 @@ class Bot {
     return this.randomUntried();
   }
 
+  /* ========== UMPAN BALIK HASIL TEMBAKAN ========== */
   feedback(r, c, result) {
     this.tried.add(this.key(r, c));
 
+    // Meleset / sudah pernah → tidak ada yang perlu dilakukan
     if (result === 'miss' || result === 'invalid') return;
+
+    // Easy tidak belajar
     if (this.difficulty === 'easy') return;
 
+    // ---- KAPAL TENGGELAM → reset semua state & kembali mencari ----
     if (result === 'sunk') {
       this.activeHits = [];
       this.targets = [];
+      this.lockedAxis = null;
       return;
     }
 
+    // ---- HIT ----
+
+    // Kalau hit baru tidak bersebelahan dengan kumpulan activeHits,
+    // berarti ini kapal baru → reset agar tidak salah mengejar
     if (this.activeHits.length > 0) {
       const adjacent = this.activeHits.some(
         ([hr, hc]) => Math.abs(hr - r) + Math.abs(hc - c) === 1
@@ -220,26 +236,88 @@ class Bot {
       if (!adjacent) {
         this.activeHits = [];
         this.targets = [];
+        this.lockedAxis = null;
       }
     }
+
     this.activeHits.push([r, c]);
 
+    // ---- Tentukan strategi ----
+
+    // EXPERT: begitu punya 2+ hit, kunci sumbu & habisi garis
+    if (this.difficulty === 'expert' && this.activeHits.length >= 2) {
+      this.lockAxisAndPursue();
+      return;
+    }
+
+    // HARD: sama, tapi tanpa kunci sumbu permanen
     if (this.difficulty === 'hard' && this.activeHits.length >= 2) {
       this.followLine();
-    } else {
-      for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
-        const nr = r + dr, nc = c + dc;
-        if (
-          nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE &&
-          !this.tried.has(this.key(nr, nc)) &&
-          !this.targets.some(t => t[0] === nr && t[1] === nc)
-        ) {
-          this.targets.push([nr, nc]);
+      return;
+    }
+
+    // ---- Baru 1 hit → periksa 4 tetangga ----
+    // EXPERT: LIFO (unshift) → dive dalam, selesaikan kapal ini dulu
+    // NORMAL/HARD: FIFO (push) → sebar pencarian
+    const neighbors = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    for (const [dr, dc] of neighbors) {
+      const nr = r + dr, nc = c + dc;
+      if (
+        nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE &&
+        !this.tried.has(this.key(nr, nc)) &&
+        !this.targets.some(t => t[0] === nr && t[1] === nc)
+      ) {
+        if (this.difficulty === 'expert') {
+          this.targets.unshift([nr, nc]);    // prioritas tertinggi
+        } else {
+          this.targets.push([nr, nc]);       // di belakang antrian
         }
       }
     }
   }
 
+  /* ========== EXPERT: kunci sumbu + habisi kapal ========== */
+  lockAxisAndPursue() {
+    const rows = this.activeHits.map(h => h[0]);
+    const cols = this.activeHits.map(h => h[1]);
+    const minR = Math.min(...rows), maxR = Math.max(...rows);
+    const minC = Math.min(...cols), maxC = Math.max(...cols);
+
+    // Tentukan sumbu kalau belum
+    if (!this.lockedAxis) {
+      if (minR === maxR)      this.lockedAxis = 'h';
+      else if (minC === maxC) this.lockedAxis = 'v';
+      else {
+        // L-shape (2 kapal bersebelahan?) → prioritaskan ujung terakhir
+        this.lockNeighborsOfLatest();
+        return;
+      }
+    }
+
+    if (this.lockedAxis === 'h') {
+      const r = rows[0];
+      const l = minC - 1, rt = maxC + 1;
+      // Coba dulu arah yang belum tentu salah — prioritaskan yang lebih panjang
+      const candidates = [];
+      if (l >= 0 && !this.tried.has(this.key(r, l))) candidates.push([r, l]);
+      if (rt < SIZE && !this.tried.has(this.key(r, rt))) candidates.push([r, rt]);
+      // Unshift di depan (LIFO) supaya segera dieksekusi
+      for (const cand of candidates) {
+        this.targets.unshift(cand);
+      }
+    } else if (this.lockedAxis === 'v') {
+      const c = cols[0];
+      const t = minR - 1, b = maxR + 1;
+      const candidates = [];
+      if (t >= 0 && !this.tried.has(this.key(t, c))) candidates.push([t, c]);
+      if (b < SIZE && !this.tried.has(this.key(b, c))) candidates.push([b, c]);
+      for (const cand of candidates) {
+        this.targets.unshift(cand);
+      }
+    }
+  }
+
+  /* ========== HARD: kejar ujung garis (versi ringan) ========== */
   followLine() {
     const rows = this.activeHits.map(h => h[0]);
     const cols = this.activeHits.map(h => h[1]);
@@ -258,6 +336,24 @@ class Bot {
         this.targets.unshift([t, minC]);
       if (b < SIZE && !this.tried.has(this.key(b, minC)))
         this.targets.unshift([b, minC]);
+    } else {
+      this.lockNeighborsOfLatest();
+    }
+  }
+
+  /* ========== Fallback: coba 4 tetangga dari hit terakhir ========== */
+  lockNeighborsOfLatest() {
+    if (!this.activeHits.length) return;
+    const [lr, lc] = this.activeHits[this.activeHits.length - 1];
+    for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+      const nr = lr + dr, nc = lc + dc;
+      if (
+        nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE &&
+        !this.tried.has(this.key(nr, nc)) &&
+        !this.targets.some(t => t[0] === nr && t[1] === nc)
+      ) {
+        this.targets.push([nr, nc]);
+      }
     }
   }
 }

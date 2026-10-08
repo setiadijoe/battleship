@@ -765,3 +765,20 @@ body.phase-manual #player-wrapper {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(255, 255, 255, 0.3);
   }
+
+
+/* ============================================================
+   TOMBOL EXPERT (aksen ungu gelap)
+   ============================================================ */
+   .option-btn[data-difficulty="expert"] {
+    border-color: #6b21a8;
+  }
+  
+  .option-btn[data-difficulty="expert"]:hover {
+    border-color: #a855f7;
+    box-shadow: 0 8px 16px rgba(168, 85, 247, 0.3);
+  }
+  
+  .option-btn[data-difficulty="expert"] .option-title {
+    color: #c084fc;
+  }
