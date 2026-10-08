@@ -10,6 +10,49 @@ const SHIPS = [
 ];
 const WATER = 0, SHIP = 1, MISS = 2, HIT = 3;
 
+/* ================== WARNA KAPAL ================== */
+const SHIP_COLORS = {
+  Carrier:    { main: '#8b5cf6', accent: '#c4b5fd' },
+  Battleship: { main: '#f97316', accent: '#fdba74' },
+  Cruiser:    { main: '#eab308', accent: '#fde047' },
+  Submarine:  { main: '#334155', accent: '#64748b' },
+  Destroyer:  { main: '#ec4899', accent: '#f9a8d4' },
+};
+
+/* ================== SVG KAPAL (per segmen) ================== */
+/**
+ * @param {string} shipName - nama kapal (Carrier, dst)
+ * @param {'head'|'body'|'tail'} part - bagian kapal
+ * @param {boolean} horizontal - true = kapal mendatar
+ */
+function shipSegmentSVG(shipName, part, horizontal) {
+  const colors = SHIP_COLORS[shipName] || { main: '#64748b', accent: '#94a3b8' };
+  const { main, accent } = colors;
+
+  // Bentuk dasar untuk kapal horizontal (haluan di KANAN, buritan di KIRI)
+  let shape;
+  if (part === 'head') {
+    // Haluan — runcing ke kanan
+    shape = `<path d="M 0,4 L 13,4 L 19,10 L 13,16 L 0,16 Z"
+                   fill="${main}" stroke="${accent}" stroke-width="0.6"/>`;
+  } else if (part === 'tail') {
+    // Buritan — rounded di kiri
+    shape = `<path d="M 3,4 L 20,4 L 20,16 L 3,16 Q -1,10 3,4 Z"
+                   fill="${main}" stroke="${accent}" stroke-width="0.6"/>`;
+  } else {
+    // Badan — kotak polos
+    shape = `<rect x="0" y="4" width="20" height="12"
+                   fill="${main}" stroke="${accent}" stroke-width="0.6"/>`;
+  }
+
+  // Kalau vertikal, rotasi 90° di sekitar pusat
+  const inner = horizontal
+    ? shape
+    : `<g transform="rotate(90 10 10)">${shape}</g>`;
+
+  return `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+}
+
 /* ================== BOARD ================== */
 class Board {
   constructor() {
@@ -268,16 +311,49 @@ function buildBoardGrid(boardEl, isEnemy) {
 }
 
 function renderBoard(boardEl, board, showShips) {
+  // --- 1. Reset semua sel ---
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
       const cell = boardEl.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
       if (!cell) continue;
-
       cell.className = 'cell';
+      cell.innerHTML = '';
+    }
+  }
+
+  // --- 2. Gambar kapal (hanya kalau showShips = true) ---
+  if (showShips) {
+    board.ships.forEach(ship => {
+      const total = ship.coords.length;
+      ship.coords.forEach(([r, c], idx) => {
+        const cell = boardEl.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+        if (!cell) return;
+
+        let part = 'body';
+        if (total > 1) {
+          if (idx === 0) part = 'tail';                 // segmen pertama = buritan
+          if (idx === total - 1) part = 'head';         // segmen terakhir = haluan
+        }
+        // (kalau total === 1, biarkan 'body')
+
+        cell.classList.add('ship');
+        cell.innerHTML = shipSegmentSVG(ship.name, part, ship.horizontal);
+      });
+    });
+  }
+
+  // --- 3. Timpa dengan state HIT / MISS ---
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
       const v = board.cells[r][c];
-      if (v === HIT) cell.classList.add('hit');
-      else if (v === MISS) cell.classList.add('miss');
-      else if (v === SHIP && showShips) cell.classList.add('ship');
+      const cell = boardEl.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+      if (v === HIT) {
+        cell.className = 'cell hit';
+        cell.innerHTML = '';           // hilangkan gambar kapal → tampak "bolong"
+      } else if (v === MISS) {
+        cell.className = 'cell miss';
+        cell.innerHTML = '';
+      }
     }
   }
 }
