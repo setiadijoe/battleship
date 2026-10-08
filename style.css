@@ -461,3 +461,53 @@ body.phase-manual #player-wrapper {
   .label { font-size: 6px !important; }
   #boards { gap: 8px !important; }
 }
+
+/* ============================================================
+   GAMBAR KAPAL (SVG INLINE)
+   ============================================================ */
+
+/* SVG mengisi penuh sel kapal */
+.cell svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;   /* biar klik tetap ke cell, bukan ke SVG */
+}
+
+/* Cell kapal tidak perlu background abu-abu lagi —
+   biarkan warna air terlihat di bagian transparan SVG */
+.cell.ship {
+  background: #2f98f5;    /* sama dengan air supaya menyatu */
+}
+
+/* Kalau kapal kena (hit), hapus background cell supaya merah jelas */
+.cell.hit  { background: #d90f0f; }
+.cell.miss { background: #5efa0a; }
+
+/* ============================================================
+   PREVIEW PENEMPATAN — pakai ::before supaya muncul DI ATAS SVG
+   ============================================================ */
+.cell {
+  position: relative;     /* wajib untuk ::before */
+}
+
+.cell.preview-valid::before,
+.cell.preview-invalid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.cell.preview-valid::before {
+  background: rgba(34, 197, 94, 0.55);
+  border: 2px solid #22c55e;
+  box-shadow: 0 0 10px #22c55e;
+}
+
+.cell.preview-invalid::before {
+  background: rgba(239, 68, 68, 0.55);
+  border: 2px solid #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+}
