@@ -242,7 +242,6 @@ h1 {
 .cell.hit  { background: #d90f0f; }
 .cell.miss { background: #5efa0a; color: #0f172a; }
 
-.cell.hit::after  { content: '×'; }
 .cell.miss::after { content: '•'; }
 
 /* ================== PREVIEW PENEMPATAN ================== */
@@ -510,4 +509,100 @@ body.phase-manual #player-wrapper {
   background: rgba(239, 68, 68, 0.55);
   border: 2px solid #ef4444;
   box-shadow: 0 0 10px #ef4444;
+}
+
+/* ============================================================
+   EFEK ASAP SAAT KENA TEMBAK
+   ============================================================ */
+
+.cell.hit {
+  position: relative;
+  overflow: visible;
+  z-index: 10;                                /* di atas sel tetangga */
+  animation: hit-ember 1.6s ease-in-out infinite alternate;
+}
+
+/* --- Asap yang naik dari sel --- */
+.cell.hit::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(230, 230, 230, 0.95) 0%,
+    rgba(160, 160, 160, 0.7) 35%,
+    rgba(90, 90, 90, 0.4) 60%,
+    rgba(40, 40, 40, 0) 80%
+  );
+  /* Beberapa puff kecil di sekitar untuk kesan asap menyebar */
+  box-shadow:
+    -4px  2px 4px rgba(190, 190, 190, 0.5),
+     4px -3px 5px rgba(150, 150, 150, 0.4),
+    -6px -6px 6px rgba(110, 110, 110, 0.35),
+     6px -8px 7px rgba( 80,  80,  80, 0.25);
+  pointer-events: none;
+  z-index: 5;
+  animation: smoke-rise 2.6s ease-out infinite;
+  will-change: transform, opacity;
+}
+
+/* --- Tanda × dengan glow api --- */
+.cell.hit::after {
+  content: '×';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #fff;
+  text-shadow:
+    0 0 4px  #ffb300,
+    0 0 8px  #ff6a00,
+    0 0 12px #ff2d00;
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* --- Variasi delay biar gak serempak --- */
+.cell.hit:nth-child(3n)     ::before { animation-delay: -0.6s; }
+.cell.hit:nth-child(3n + 1)::before { animation-delay: -1.4s; }
+.cell.hit:nth-child(3n + 2)::before { animation-delay: -2.2s; }
+
+/* --- Keyframes --- */
+@keyframes smoke-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(2px) scale(0.3);
+  }
+  20% {
+    opacity: 0.95;
+    transform: translateY(-3px) scale(1);
+  }
+  60% {
+    opacity: 0.55;
+    transform: translateY(-14px) scale(1.7);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px) scale(2.4);
+  }
+}
+
+@keyframes hit-ember {
+  from {
+    box-shadow:
+      inset 0 0 5px rgba(255, 180, 0, 0.35),
+      0 0 0 rgba(255, 100, 0, 0);
+  }
+  to {
+    box-shadow:
+      inset 0 0 9px rgba(255, 130, 0, 0.7),
+      0 0 6px rgba(255, 80, 0, 0.45);
+  }
 }
